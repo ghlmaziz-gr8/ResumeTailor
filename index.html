@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Tailor</title>
+<style>
+  :root { --ink:#1d2330; --muted:#5b6475; --line:#d9dde6; --accent:#1f5fbf; --ok:#17794a; --warn:#b26a00; --bad:#a32727; --bg:#f6f7f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg); line-height:1.5; }
+  header { background:#fff; border-bottom:1px solid var(--line); padding:18px 28px; }
+  header h1 { margin:0; font-size:20px; }
+  header p { margin:4px 0 0; color:var(--muted); font-size:14px; }
+  main { display:grid; grid-template-columns:minmax(300px,1fr) minmax(340px,1.25fr); gap:20px; padding:20px 28px; max-width:1440px; margin:0 auto; }
+  @media (max-width:960px) { main { grid-template-columns:1fr; } }
+  section { background:#fff; border:1px solid var(--line); border-radius:10px; padding:18px; margin-bottom:20px; }
+  h2 { font-size:13px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  label { display:block; font-size:13px; font-weight:600; margin:12px 0 6px; }
+  textarea, input { width:100%; font:inherit; font-size:14px; padding:10px; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  textarea { min-height:160px; resize:vertical; }
+  .row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  button { font:inherit; font-size:14px; padding:9px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:#fff; cursor:pointer; }
+  button.secondary { background:#fff; color:var(--accent); }
+  button.small { padding:4px 10px; font-size:12px; }
+  button.danger { background:#fff; color:var(--bad); border-color:#efc3c3; }
+  button:hover { opacity:.9; }
+  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
+  .score { display:flex; align-items:center; gap:16px; margin-bottom:10px; }
+  .big { font-size:40px; font-weight:700; color:var(--accent); }
+  .bar { height:10px; background:#e6e9f0; border-radius:6px; overflow:hidden; }
+  .bar > div { height:100%; background:var(--accent); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 14px; }
+  .chip { font-size:12px; padding:4px 9px; border-radius:999px; border:1px solid; }
+  .chip.hit { color:var(--ok); border-color:#b9dfca; background:#eef8f2; }
+  .chip.pref { color:var(--warn); border-color:#efd9ab; background:#fdf6e7; }
+  .chip.gap { color:var(--bad); border-color:#efc3c3; background:#fbeeee; }
+  .note { font-size:13px; background:#f1f5fb; border-left:3px solid var(--accent); padding:10px 12px; border-radius:6px; margin:12px 0; }
+  .empty { color:var(--muted); font-size:14px; font-style:italic; }
+  ul.changes li { font-size:13px; margin-bottom:4px; }
+  ul.versions { list-style:none; margin:0; padding:0; }
+  ul.versions li { font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); }
+  .doc { background:#fff; color:#111; border:1px solid var(--line); border-radius:6px; padding:36px 42px; font-family:Calibri,Arial,sans-serif; font-size:13.5px; line-height:1.45; }
+  .doc h1 { font-size:24px; margin:0 0 2px; }
+  .doc .contact { color:#444; margin:0 0 6px; }
+  .doc h3 { font-size:16px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; border-bottom:1.5px solid #333; padding-bottom:3px; margin:20px 0 8px; }
+  .doc p { margin:0 0 6px; }
+  .doc p.lead { font-weight:700; margin:12px 0 4px; }
+  .doc p.inline { margin:0 0 6px; }
+  .doc .job { margin:10px 0 4px; }
+  .doc .job b { font-size:16px; }
+  .doc p.sub { font-weight:700; text-transform:uppercase; margin:6px 0 0; }
+  .doc ul { margin:0 0 6px 18px; padding:0; }
+  .doc li { margin-bottom:3px; }
+  .upload { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  .busy-card { display:flex; gap:14px; align-items:center; padding:14px; border:1px solid var(--line); border-radius:10px; background:#f7f9fd; }
+  .busy-title { font-weight:600; margin-bottom:2px; }
+  .spinner { width:28px; height:28px; border-radius:50%; border:3px solid #cfdcf3; border-top-color:var(--accent); animation:spin .8s linear infinite; flex-shrink:0; }
+  .indet { height:6px; background:#e6e9f0; border-radius:4px; overflow:hidden; margin-top:10px; position:relative; }
+  .indet > div { position:absolute; top:0; bottom:0; width:35%; background:var(--accent); border-radius:4px; animation:slide 1.2s ease-in-out infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes slide { 0% { left:-35%; } 100% { left:100%; } }
+  .ready { display:flex; gap:14px; align-items:center; padding:14px; border-radius:10px; background:#eef8f2; border:1px solid #b9dfca; margin-bottom:14px; animation:popin .5s ease-out; }
+  .ready .check { width:36px; height:36px; border-radius:50%; background:var(--ok); color:#fff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; flex-shrink:0; animation:popin .6s ease-out; }
+  @keyframes popin { 0% { transform:scale(.6); opacity:0; } 100% { transform:scale(1); opacity:1; } }
+  #preview.dimmed { opacity:.45; transition:opacity .3s; }
+  #preview.flash { animation:glow 1.8s ease-out; }
+  @keyframes glow { 0% { box-shadow:0 0 0 4px var(--ok); } 100% { box-shadow:0 0 0 0 rgba(23,121,74,0); } }
+  button:disabled { opacity:.6; cursor:wait; }
+  @media (prefers-reduced-motion: reduce) {
+    .spinner, .indet > div, .ready, .ready .check, #preview.flash { animation:none; }
+    .indet > div { left:0; width:100%; opacity:.35; }
+  }
+  .tog { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; margin:0 0 10px; }
+  .tog input { width:auto; }
+  .doc mark { background:#fff1a8; color:inherit; padding:0 1px; border-radius:2px; }
+  ul.amap li { font-size:13px; margin-bottom:6px; }
+  .gap-row { border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:8px 0; }
+  .gap-row textarea { margin-top:6px; font-size:13px; }
+  .where { font-weight:600; }
+  @media print {
+    body * { visibility:hidden; }
+    #preview, #preview * { visibility:visible; }
+    #preview { position:absolute; left:0; top:0; width:100%; border:none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Resume Tailor</h1>
+  <p>Paste a job description and get an updated, tailored resume every time. Each version is saved. Only your existing experience is used; nothing is invented.</p>
+</header>
+
+<main>
+  <div>
+    <section>
+      <h2>Your details</h2>
+      <label for="pName">Your name (used if your resume has no name line)</label>
+      <input id="pName" type="text" placeholder="Your Name" autocomplete="name">
+      <label for="pLinkedin">LinkedIn URL (added to your contact line)</label>
+      <input id="pLinkedin" type="text" placeholder="https://www.linkedin.com/in/your-profile" autocomplete="url">
+      <div class="row" style="margin-top:10px"><button class="secondary small" id="saveProfile">Save my details</button></div>
+      <div class="hint" id="profileStatus">Saved in this browser only. Anyone else who opens this file starts with empty details.</div>
+    </section>
+    <section>
+      <h2>1. Your master resume</h2>
+      <textarea id="resume"></textarea>
+      <div class="upload">
+        <button class="secondary" id="pick">Upload new master resume</button>
+        <button class="secondary small" id="restore" style="display:none">Swap with previous master</button>
+        <input type="file" id="upload" accept=".docx,.pdf,.txt,.md" style="display:none">
+      </div>
+      <div class="hint" id="masterMeta"></div>
+      <div class="hint" id="uploadStatus"></div>
+      <div class="hint">Upload replaces the master above and keeps your saved versions. You can still edit the text directly. Word bullets and headings are converted automatically. Video sections are removed from every output. For PDFs, a .docx or .txt copy usually works better.</div>
+    </section>
+
+    <section>
+      <h2>2. The job</h2>
+      <label for="title">Target title</label>
+      <input id="title" placeholder="e.g., VP of Technology Strategy">
+      <label for="company">Company</label>
+      <input id="company" placeholder="e.g., Dual Path Connected Solutions">
+      <label for="link">Job link (reference only)</label>
+      <input id="link" placeholder="https://...">
+      <div class="hint">Browsers can't read job pages directly, so paste the full description below.</div>
+      <label for="jd">Job description</label>
+      <textarea id="jd" placeholder="Paste the full job description..."></textarea>
+      <div class="row">
+        <button id="run">Generate tailored resume</button>
+        <button class="secondary" id="clear">Clear job fields</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>AI drafting (Claude API)</h2>
+      <label for="mode">Drafting mode</label>
+      <select id="mode">
+        <option value="claude">Claude API: rewrites bullets and summary to match the job</option>
+        <option value="gemini" selected>Google Gemini API: free tier available; rewrites to match the job</option>
+        <option value="rules">Rules only: reorders your existing text, offline</option>
+      </select>
+      <label for="model">Model</label>
+      <select id="model"></select>
+      <label for="apikey" id="keyLabel">Anthropic API key</label>
+      <input id="apikey" type="password" placeholder="Paste key, then Save key">
+      <div class="row" style="margin-top:8px">
+        <button class="secondary small" id="saveKey">Save key</button>
+        <button class="secondary small danger" id="clearKey">Remove key</button>
+      </div>
+      <div class="hint" id="keyStatus"></div>
+      <div class="note">In AI mode, your master resume and the job description are sent to the provider you choose. Keys are stored only in this browser, and anyone who can use this browser profile can read them. Remove keys on shared computers. Gemini's free tier may use the content to improve Google's products; Claude's API does not use it that way. For Gemini, restrict the key to the Gemini API in Google AI Studio and set a spending limit.</div>
+    </section>
+
+    <section>
+      <h2>Saved versions</h2>
+      <ul class="versions" id="versions"></ul>
+    </section>
+
+    <section>
+      <h2>5. Where the job matches your resume</h2>
+      <p class="hint">Each job-description theme your resume covers, and the sections where it appears. These are the highlighted parts in section 4.</p>
+      <div id="alignMap" style="margin-top:12px"><p class="empty">Generate a tailored resume to see where each match appears.</p></div>
+    </section>
+
+    <section>
+      <h2>6. What was added to match the job</h2>
+      <p class="hint">Every line in the tailored resume that is new or reworded compared with your master, plus bullets moved up. Anything not listed here is your original wording.</p>
+      <div id="changeMap" style="margin-top:12px"><p class="empty">Generate a tailored resume to see what was added or moved.</p></div>
+    </section>
+  </div>
+
+  <div>
+    <section>
+      <h2>3. Alignment</h2>
+      <div id="report"><p class="empty">Generate a tailored resume to see alignment, matched themes, gaps, and what changed.</p></div>
+    </section>
+
+    <section>
+      <h2>4. Tailored resume</h2>
+      <div class="row" style="margin:0 0 12px">
+        <button id="dl" disabled title="Available after your resume is generated">Download Word (.doc)</button>
+        <button class="secondary" id="copy">Copy text</button>
+        <button class="secondary" onclick="window.print()">Print / save PDF</button>
+      </div>
+      <label class="tog"><input type="checkbox" id="hl" checked> Highlight job-matched text</label>
+      <div id="preview" class="doc"><p class="empty">Your tailored resume appears here.</p></div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const KEY_RESUME = "resumeTailor.resume.v1";
+const KEY_META = "resumeTailor.resumeMeta.v1";
+const KEY_PREV = "resumeTailor.resumePrev.v1";
+const KEY_PREV_META = "resumeTailor.resumePrevMeta.v1";
+const KEY_VERS = "resumeTailor.versions.v1";
+const KEY_API = "resumeTailor.apiKey.v1";
+const KEY_GEMINI = "resumeTailor.geminiKey.v1";
+
+// Models offered for each provider. Gemini's free tier covers the two Flash models listed.
+const MODELS = {
+  claude: [
+    ["claude-sonnet-5-5", "Claude Sonnet 5.5 (recommended)"],
+    ["claude-opus-5-5", "Claude Opus 5.5 (highest quality)"],
+    ["claude-haiku-5-5", "Claude Haiku 5.5 (fastest, lowest cost)"]
+  ],
+  gemini: [
+    ["gemini-3.8-flash", "Gemini 3.8 Flash (free tier, recommended)"],
+    ["gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite (free tier, fastest)"]
+  ]
+};
+const PROVIDER_NAMES = {claude: "Claude API", gemini: "Google Gemini API"};
+
+const TERMS = [
+  ["vCIO / strategic advisory", /\bvcio\b|advisory|advisor/i],
+  ["Quarterly business reviews", /quarterly business review|\bqbr/i],
+  ["Technology roadmaps", /roadmap/i],
+  ["Strategic planning", /strateg/i],
+  ["Executive communication", /executive|c-level|cxo/i],
+  ["Stakeholder management", /stakeholder/i],
+  ["Client relationships", /client|customer/i],
+  ["Senior living", /senior living/i],
+  ["MSP / managed services", /managed services|\bmsp\b|managed it/i],
+  ["Infrastructure", /infrastructure/i],
+  ["Networking", /networking/i],
+  ["Cybersecurity", /cyber|security/i],
+  ["Cloud modernization", /cloud|modernization/i],
+  ["IT leadership", /it leadership|vp of it|it leader|technology leader|director|head of it/i],
+  ["Technology assessments", /assessment/i],
+  ["Pre-sales / deal shaping", /sales|pre-sales|deal shaping|deal/i],
+  ["Program management", /program management/i],
+  ["ITSM", /\bitsm\b|service management/i],
+  ["SLA / SLO governance", /\bsla|\bslo/i],
+  ["Incident management", /incident|war room/i],
+  ["Compliance (HIPAA / regulatory)", /hipaa|compliance|regulatory|fedramp/i],
+  ["AI-enabled operations", /\bai\b|artificial intelligence|genai|generative|llm/i],
+  ["Observability", /observability|monitoring|telemetry/i],
+  ["Site reliability (SRE)", /\bsre\b|site reliability/i],
+  ["Agile / SAFe / Scrum", /agile|\bsafe\b|scrum/i],
+  ["Salesforce", /salesforce/i],
+  ["ServiceNow", /servicenow/i],
+  ["Azure", /azure/i],
+  ["AWS", /\baws\b|amazon web services/i],
+  ["Kubernetes / Docker", /kubernetes|docker/i],
+  ["Data optimization / big data", /data optimi|big data|data lake|data fabric/i],
+  ["Team leadership", /leading|mentor|direct reports|cross-functional|team/i],
+  ["Financial outcomes", /budget|saving|cost|\$/i],
+  ["Non-technical communication", /non-technical|business-focused|simplif|plain/i],
+  ["Government / public sector", /government|medicaid|public sector/i],
+  ["Healthcare", /healthcare|health care|payer|provider/i],
+];
+
+const STOP = new Set("the and for with that this from your you our are will have has into their they them who what when where which about more than also such over role work team teams using use can able must should strong experience years year senior leading help clients client build building provide across through within other".split(" "));
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let current = null; // the version currently shown
+
+// ---------- Job description analysis ----------
+
+function splitJD(jd) {
+  const m = jd.search(/strongly preferred|\bpreferred\b|nice to have|bonus/i);
+  return m === -1 ? {req: jd, pref: ""} : {req: jd.slice(0, m), pref: jd.slice(m)};
+}
+
+function jdThemes(jd) {
+  const {req, pref} = splitJD(jd);
+  return TERMS.map(([label, rx]) => {
+    const required = rx.test(req);
+    const preferred = !required && rx.test(pref);
+    return {label, rx, required, inJD: required || preferred};
+  }).filter(t => t.inJD);
+}
+
+function jdWordSet(jd) {
+  return new Set((jd.toLowerCase().match(/[a-z][a-z\-]{4,}/g) || []).filter(w => !STOP.has(w)));
+}
+
+function scoreText(text, themes, jdWords) {
+  const termHits = themes.filter(t => t.rx.test(text)).length;
+  const wordHits = new Set((text.toLowerCase().match(/[a-z][a-z\-]{4,}/g) || []).filter(w => jdWords.has(w))).size;
+  return termHits * 3 + wordHits;
+}
+
+// ---------- Resume structure ----------
+
+// Common resume section names. Lines matching these are headings even when not all caps.
+const KNOWN_HEADINGS = /^(professional summary|executive summary|summary|objective|profile|core capabilities|core competencies|competencies|key competencies|technical skills|skills|technology|technology stack|technologies|experience|professional experience|work experience|employment history|education|certifications?|licenses?|awards|publications|languages|state govt\.? projects|state government projects|representative clients|domain knowledge|report writer|reporting tools|cloud and big data|industry experience|relevant experience|career history|video intros? of projects)$/i;
+
+// Lists in these sections stay as bullets; other short lists display inline.
+const LIST_SECTION = /certif|licen|award|publication|affiliation/i;
+
+// Lines that are contact details when they appear before the first section.
+const CONTACT_LINE = /@|\b\d{3}[.\-\s)]\d{3}|^(email|e-mail|phone|mobile|tel|linkedin|location|address)\s*:/i;
+
+const REORDER_LABELS = /^(core capabilities|competencies|technology)$/i;
+
+function isHeading(l) {
+  if (l.length < 3 || l.length > 70) return false;
+  if (KNOWN_HEADINGS.test(l)) return true;
+  return l === l.toUpperCase() && /[A-Z]/.test(l) && !/[@|\d]/.test(l) && !l.startsWith("- ");
+}
+
+// Removes the "Video Intros of Projects" section and any video links, from any input.
+function dropExcludedLines(lines) {
+  const kept = [];
+  let skip = false, removed = 0;
+  for (const l of lines) {
+    if (isHeading(l)) {
+      skip = /video\s+intros?/i.test(l);
+      if (skip) removed++; else kept.push(l);
+      continue;
+    }
+    if (skip || /youtu\.?be|youtube\.com/i.test(l)) continue;
+    kept.push(l);
+  }
+  return {lines: kept, removed};
+}
+
+// A short title-case line with no punctuation, followed by bullets, is a sub-section heading
+// (e.g., "AI Products & Intelligent Automation Platforms"). Job lines are excluded.
+const TITLE_SMALL_WORDS = new Set(["and", "of", "the", "for", "to", "in", "on", "with", "a", "an", "&"]);
+function promoteSubheadings(lines) {
+  return lines.map((l, i) => {
+    const next = lines[i + 1] || "";
+    const isSub = l.length <= 70 && /^[A-Z]/.test(l) && !/[.,;:|@\d]/.test(l)
+      && !isJobLine(l) && !l.startsWith("- ") && next.startsWith("- ")
+      && l.split(/\s+/).every(w => TITLE_SMALL_WORDS.has(w.toLowerCase()) || !/^[a-z]/.test(w));
+    return isSub ? "## " + l : l;
+  });
+}
+
+function cleanContact(parts) {
+  return parts
+    .map(p => p.replace(/^(email|e-mail|phone|mobile|tel|linkedin|location|address)\s*:\s*/i, "")
+               .replace(/\S+@\S+/g, m => m.toLowerCase())
+               .trim())
+    .filter(Boolean);
+}
+
+function parseResume(text) {
+  const {lines, removed} = dropExcludedLines(text.split(/\r?\n/).map(l => l.trim()).filter(Boolean));
+  const first = lines.length ? lines.shift() : "";
+  const [name, ...headerParts] = first.split(" | ");
+  const contact = [...headerParts];
+  const sections = [];
+  let sec = null, job = null;
+  for (const raw of promoteSubheadings(lines)) {
+    const l = raw.replace(/^## /, "");
+    // Inside a role, a sub-heading (e.g., "ENGINEERING GOVERNANCE & RELIABILITY") groups the bullets that follow it.
+    if (job && (raw.startsWith("## ") || (!isHeading(l) && !isJobLine(l) && /^[A-Z][A-Z&,\-\/ ]{3,70}$/.test(l)))) {
+      job.bullets.push({sub: l});
+      continue;
+    }
+    if (raw.startsWith("## ") || isHeading(l)) { sec = {title: l, items: []}; sections.push(sec); job = null; continue; }
+    if (!sec) {
+      if (CONTACT_LINE.test(l)) { contact.push(l); continue; }
+      sec = {title: "", items: []}; sections.push(sec);
+    }
+    if (l.startsWith("- ")) {
+      if (job) job.bullets.push(l.slice(2));
+      else sec.items.push({t: "b", text: l.slice(2)});
+    } else if (isJobLine(l)) {
+      job = {t: "job", text: l, bullets: []};
+      sec.items.push(job);
+    } else if (job && isExperienceTitle(sec.title) && !job.summary && !job.bullets.length) {
+      // The single descriptive line under a role's header belongs to that role.
+      job.summary = l;
+    } else {
+      job = null;
+      sec.items.push({t: "p", text: l});
+    }
+  }
+  return {name: name || "", contact: cleanContact(contact), sections, removed};
+}
+
+// Split on ; or , at the top level only (ignores commas inside parentheses).
+function splitTop(s) {
+  const out = []; let depth = 0, cur = "";
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === "(") depth++;
+    if (c === ")") depth--;
+    if (depth === 0 && (c === ";" || c === ",") && s[i + 1] === " ") { out.push(cur.trim()); cur = ""; i++; continue; }
+    cur += c;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+// ---------- Tailoring and rendering ----------
+
+function renderPara(text, sec, themes, jdWords, stats) {
+  currentSec = sec;
+  const m = text.match(/^([^:]{3,40}):\s*(.+)$/);
+  const rx = isExperienceSection(sec) ? companyRx : null;
+  if (!m) return `<p>${boldCompanies(text, rx)}</p>`;
+  const label = m[1].trim();
+  let body = m[2].trim();
+  if (REORDER_LABELS.test(label)) {
+    const end = /\.$/.test(body) ? "." : "";
+    const items = splitTop(body.replace(/\.$/, ""));
+    const sorted = items.map((x, i) => ({x, i, s: scoreText(x, themes, jdWords)}))
+      .sort((a, b) => b.s - a.s || a.i - b.i);
+    if (sorted.some((x, i) => x.i !== i)) stats.reordered++;
+    body = sorted.map(x => x.x).join(/^core/i.test(label) ? "; " : ", ") + end;
+  }
+  // Drop a label that just repeats the section heading.
+  if (label.toLowerCase() === sec.title.toLowerCase()) return `<p>${boldCompanies(body, rx)}</p>`;
+  return `<p><b>${esc(label)}:</b> ${boldCompanies(body, rx)}</p>`;
+}
+
+// A job line has a " | " separator or a date range, e.g. "Company, City Apr '19 – To Present".
+function isJobLine(l) {
+  if (l.includes(" | ")) return true;
+  return /\b(19|20)\d{2}\b|[’']\d{2}\b|\bpresent\b|\bcurrent\b/i.test(l) && l.length <= 160 && !/[.;]$/.test(l);
+}
+
+// Company name (text before the first comma or " | ") is bold; the rest is regular.
+function jobCompany(text) {
+  const pipe = text.indexOf(" | ");
+  const head = pipe === -1 ? text : text.slice(0, pipe);
+  const comma = head.indexOf(",");
+  return (comma === -1 ? head : head.slice(0, comma)).trim();
+}
+
+function jobHtml(text) {
+  const pipe = text.indexOf(" | ");
+  const head = pipe === -1 ? text : text.slice(0, pipe);
+  const tail = pipe === -1 ? "" : text.slice(pipe);
+  const company = jobCompany(text);
+  const rest = head.slice(head.indexOf(company) + company.length);
+  return `<p class="job"><b>${esc(company)}</b>${boldCompanies(rest + tail, null)}</p>`;
+}
+
+// Added to the contact line at the top of every resume unless the master already lists a LinkedIn link.
+// Personal details are stored only in this browser (never in the file), so each person enters their own.
+const KEY_PROFILE = "resumeTailor.profile.v1";
+function loadProfile() {
+  try { return JSON.parse(localStorage.getItem(KEY_PROFILE) || "{}") || {}; } catch (e) { return {}; }
+}
+
+// Company names bolded wherever they appear in experience sections.
+// Company names come from the resume being tailored (its job lines); no employer names are built in.
+const KNOWN_COMPANIES = [];
+let companyRx = null;
+// Alignment state for the current run: themes found in the resume, the highlight pattern,
+// the match log (for the alignment map), and the section being rendered.
+let activeThemes = [], markRx = null, alignLog = [], currentSec = null, lastRun = null;
+// Change tracking: lines not found in the master (rewritten or added), bullets moved up, and the master text to compare against.
+let rewriteLog = [], movedLog = [], masterNorm = "";
+const normText = s => String(s).toLowerCase().replace(/[^a-z0-9%$.+]+/g, " ").trim();
+
+function buildCompanyRegex(sections) {
+  const names = [...KNOWN_COMPANIES];
+  for (const sec of sections) for (const it of sec.items) if (it.t === "job") names.push(jobCompany(it.text));
+  const list = [...new Set(names.map(n => n.trim()).filter(n => n.length >= 3))]
+    .sort((a, b) => b.length - a.length)
+    .map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return list.length ? new RegExp(`\\b(${list.join("|")})\\b`, "g") : null;
+}
+
+function isExperienceSection(sec) {
+  return /experience|career|employment|history/i.test(sec.title) || sec.items.some(it => it.t === "job");
+}
+
+// Escapes text, highlights job-matched terms (when highlighting is on), logs each match for the
+// alignment map, and bolds company names when an experience-company pattern is given.
+function boldCompanies(text, rx) {
+  const section = currentSec ? currentSec.title || "Summary" : "";
+  const hits = activeThemes.filter(t => t.rx.test(text));
+  for (const t of hits) alignLog.push({theme: t.label, section, text});
+  if (masterNorm && !masterNorm.includes(normText(text))) {
+    rewriteLog.push({section, text, themes: hits.map(t => t.label)});
+  }
+  let s = esc(text);
+  if (markRx) s = s.replace(markRx, m => `<mark>${m}</mark>`);
+  return rx ? s.replace(rx, "<b>$1</b>") : s;
+}
+
+function renderChangeMap(rewrites, moved) {
+  if (!rewrites.length && !moved.length) {
+    return '<p class="empty">Nothing was added or moved. Every line matches your master as written.</p>';
+  }
+  const snip = s => s.length > 160 ? s.slice(0, 157) + "..." : s;
+  const seen = new Set();
+  const uniq = list => list.filter(e => { const k = e.section + "|" + e.text; if (seen.has(k)) return false; seen.add(k); return true; });
+  const rw = uniq(rewrites);
+  const mv = uniq(moved);
+  let html = `<p style="margin:0 0 6px"><b>${rw.length}</b> new or reworded line${rw.length === 1 ? "" : "s"} &middot; <b>${mv.length}</b> bullet${mv.length === 1 ? "" : "s"} moved up</p>`;
+  if (rw.length) {
+    html += `<p style="margin:10px 0 4px"><b>New or reworded wording</b></p><ul class="amap">${rw.map(e =>
+      `<li><span class="where">${esc(e.section)}:</span> ${esc(snip(e.text))}${e.themes.length ? ` <span class="hint">matches ${esc(e.themes.join(", "))}</span>` : ""}</li>`).join("")}</ul>`;
+  }
+  if (mv.length) {
+    html += `<p style="margin:10px 0 4px"><b>Moved up within their role</b></p><ul class="amap">${mv.map(e =>
+      `<li><span class="where">${esc(e.section)}:</span> ${esc(snip(e.text))}</li>`).join("")}</ul>`;
+  }
+  return html;
+}
+
+function renderAlignMap(log) {
+  if (!log.length) return '<p class="empty">No job-description themes were found in your resume.</p>';
+  const groups = new Map();
+  for (const e of log) {
+    if (!groups.has(e.theme)) groups.set(e.theme, new Map());
+    const key = e.section + "|" + e.text;
+    if (!groups.get(e.theme).has(key)) groups.get(e.theme).set(key, e);
+  }
+  const snip = s => s.length > 160 ? s.slice(0, 157) + "..." : s;
+  return [...groups].map(([theme, g]) => {
+    const items = [...g.values()];
+    return `<p style="margin:10px 0 4px"><b>${esc(theme)}</b> <span class="hint">${items.length} place${items.length > 1 ? "s" : ""}</span></p>
+      <ul class="amap">${items.map(e => `<li><span class="where">${esc(e.section)}:</span> ${esc(snip(e.text))}</li>`).join("")}</ul>`;
+  }).join("");
+}
+
+// Experience roles are listed most recent first. A role ending "Present"/"Current" ranks newest;
+// otherwise the latest year in its date range decides. Roles without a date keep their original order.
+function jobRecency(text) {
+  if (/\b(present|current|now)\b/i.test(text)) return {end: 9999, start: 9999};
+  const yrs = [...text.matchAll(/\b((?:19|20)\d{2})\b|[’'](\d{2})\b/g)]
+    .map(m => m[1] ? +m[1] : 2000 + +m[2]);
+  if (!yrs.length) return {end: -1, start: -1};
+  return {end: Math.max(...yrs), start: Math.min(...yrs)};
+}
+
+function isExperienceTitle(title) {
+  return /experience|career|employment|history/i.test(title || "");
+}
+
+function orderJobs(sec) {
+  if (!isExperienceTitle(sec.title)) return sec.items;
+  const jobs = sec.items.filter(it => it.t === "job");
+  if (jobs.length < 2) return sec.items;
+  const sorted = jobs.map((j, i) => ({j, i, k: jobRecency(j.text)}))
+    .sort((a, b) => (b.k.end - a.k.end) || (b.k.start - a.k.start) || (a.i - b.i))
+    .map(x => x.j);
+  let n = 0;
+  return sec.items.map(it => it.t === "job" ? sorted[n++] : it);
+}
+
+function renderSection(sec, themes, jdWords, stats) {
+  currentSec = sec;
+  if (!sec.items.length) return `<p class="lead">${esc(sec.title)}</p>`;
+  let html = sec.title ? `<h3>${esc(sec.title)}</h3>` : "";
+  const isList = LIST_SECTION.test(sec.title);
+  const rx = isExperienceSection(sec) ? companyRx : null;
+  let group = [];
+  const flush = () => {
+    if (!group.length) return;
+    if (!isList && group.every(x => x.length <= 60)) {
+      html += `<p class="inline">${group.map(x => boldCompanies(x, rx)).join(" · ")}</p>`;
+    } else {
+      html += "<ul>" + group.map(x => `<li>${boldCompanies(x, rx)}</li>`).join("") + "</ul>";
+    }
+    group = [];
+  };
+  for (const it of orderJobs(sec)) {
+    if (it.t === "b") { group.push(it.text); continue; }
+    flush();
+    if (it.t === "p") { html += renderPara(it.text, sec, themes, jdWords, stats); continue; }
+    html += jobHtml(it.text);
+    if (it.summary) html += `<p>${boldCompanies(it.summary, rx)}</p>`;
+    // Bullets form groups: the first group has no heading, each sub-heading starts a new group.
+    const groups = [{title: null, bullets: []}];
+    for (const b of it.bullets) {
+      if (typeof b === "object") groups.push({title: b.sub, bullets: []});
+      else groups[groups.length - 1].bullets.push(b);
+    }
+    for (const g of groups) {
+      if (g.title) html += `<p class="sub">${esc(g.title)}</p>`;
+      if (!g.bullets.length) continue;
+      const sorted = g.bullets.map((b, i) => ({b, i, s: scoreText(b, themes, jdWords)}))
+        .sort((a, b) => b.s - a.s || a.i - b.i);
+      sorted.forEach((x, i) => {
+        if (x.i !== i) { stats.moved++; movedLog.push({section: sec.title || "Summary", text: x.b}); }
+      });
+      html += "<ul>" + sorted.map(x => `<li>${boldCompanies(x.b, rx)}</li>`).join("") + "</ul>";
+    }
+  }
+  flush();
+  return html;
+}
+
+function tailor(resumeText, jd, title, highlight = false, masterText = resumeText) {
+  const themes = jdThemes(jd);
+  const jdWords = jdWordSet(jd);
+  themes.forEach(t => t.present = t.rx.test(resumeText));
+  activeThemes = themes.filter(t => t.present);
+  alignLog = [];
+  rewriteLog = [];
+  movedLog = [];
+  masterNorm = normText(masterText);
+  markRx = highlight && activeThemes.length
+    ? new RegExp(activeThemes.map(t => `(?:${t.rx.source})`).join("|"), "gi") : null;
+
+  const matchedReq = themes.filter(t => t.required && t.present).map(t => t.label);
+  const matchedPref = themes.filter(t => !t.required && t.present).map(t => t.label);
+  const gaps = themes.filter(t => !t.present);
+
+  let got = 0, total = 0;
+  themes.forEach(t => { const w = t.required ? 1 : 0.5; total += w; if (t.present) got += w; });
+  const pct = total ? Math.round(got / total * 100) : 0;
+
+  const parsed = parseResume(resumeText);
+  const stats = {reordered: 0, moved: 0};
+
+  companyRx = buildCompanyRegex(parsed.sections);
+  // The name line always prints; a contact line mistaken for the name falls back to a placeholder.
+  const profile = loadProfile();
+  const displayName = parsed.name && !CONTACT_LINE.test(parsed.name) ? parsed.name : (profile.name || "Your Name");
+  let body = `<h1>${esc(displayName)}</h1>`;
+  const contactItems = [...parsed.contact];
+  if (!contactItems.some(c => /linkedin\.com/i.test(c)) && profile.linkedin) contactItems.push(profile.linkedin);
+  const contactHtml = contactItems.map(c => /^https?:\/\//i.test(c)
+    ? `<a href="${esc(c)}">${esc(c.replace(/^https?:\/\/(www\.)?/i, ""))}</a>`
+    : esc(c)).join(" | ");
+  body += `<p class="contact">${contactHtml}</p>`;
+  // Certifications always print last, whatever order the uploaded file used.
+  const isCert = sec => /certif/i.test(sec.title);
+  const ordered = [...parsed.sections.filter(s => !isCert(s)), ...parsed.sections.filter(isCert)];
+  for (const sec of ordered) body += renderSection(sec, themes, jdWords, stats);
+
+  const changes = [];
+  if (stats.reordered) changes.push(`Reordered ${stats.reordered} skills line(s) so the most relevant items come first.`);
+  if (stats.moved) changes.push(`Moved ${stats.moved} experience bullet(s) up within their role.`);
+  if (!changes.length) changes.push("Skills and experience order unchanged; they already fit this role.");
+  if (parsed.removed) changes.push("Removed the Video Intros of Projects section and its links.");
+  changes.push("No experience was added. Every fact comes from your master resume.");
+
+  return {html: body, pct, matchedReq, matchedPref, gaps, changes, alignLog, rewriteLog, movedLog};
+}
+
+// Removes video content from saved HTML (versions generated before this rule existed).
+function stripVideoHtml(html) {
+  return html
+    .replace(/<h3>[^<]*video\s+intros?[^<]*<\/h3>[\s\S]*?(?=<h3>|<p class="lead">|<p class="job">|<p class="contact">|$)/gi, "")
+    .replace(/<p>[^<]*video\s+intros?[^<]*<\/p>\s*(<ul>[\s\S]*?<\/ul>)?/gi, "")
+    .replace(/<li>[^<]*(youtu\.?be|youtube\.com)[^<]*<\/li>/gi, "");
+}
+
+// ---------- Report ----------
+
+let pendingGaps = [];
+
+// Fill-in sentences for each theme. Bracketed parts must be replaced with real details before adding.
+const GAP_SUGGESTIONS = {
+  "vCIO / strategic advisory": "Advised [executives or clients] on [technology direction], turning business goals into a plan that delivered [measurable result].",
+  "Quarterly business reviews": "Ran quarterly business reviews with [clients or leadership] covering [service metrics and priorities], which [result].",
+  "Technology roadmaps": "Built and maintained a [time frame] technology roadmap for [area], aligning [number] initiatives to [business goal].",
+  "Strategic planning": "Led strategic planning for [scope], setting priorities and budget for [period] that delivered [outcome].",
+  "Executive communication": "Presented [topic] to [executive audience], translating technical risk into decisions on [outcome].",
+  "Stakeholder management": "Managed [number] stakeholders across [teams or organizations] to deliver [project] on [schedule or budget].",
+  "Client relationships": "Owned relationships with [number] [clients or customers], maintaining [satisfaction or retention result].",
+  "Senior living": "Supported [senior living or care operations] with [technology or process], improving [result].",
+  "MSP / managed services": "Directed managed services for [number] clients, delivering [service] with [SLA or uptime result].",
+  "Infrastructure": "Led [infrastructure project] covering [servers, network, or cloud], completed in [timeframe] with [result].",
+  "Networking": "Designed and managed [network scope] for [environment], achieving [uptime or performance result].",
+  "Cybersecurity": "Implemented [security control or program] across [scope], reducing [risk] and meeting [standard].",
+  "Cloud modernization": "Led cloud modernization of [application or platform] to [Azure or AWS], reducing [cost or time] by [result].",
+  "IT leadership": "Led an IT team of [number] across [functions], delivering [outcome] within [budget or timeline].",
+  "Technology assessments": "Conducted technology assessments for [number] [systems or clients], producing recommendations that [result].",
+  "Pre-sales / deal shaping": "Supported pre-sales for [type of opportunity], shaping solution scope and pricing that [won or advanced] the deal.",
+  "Program management": "Managed [program name] of [size] with [budget], delivering on [timeline] with [result].",
+  "ITSM": "Administered ITSM processes including [incident, change, or problem management] using [tool], improving [metric].",
+  "SLA / SLO governance": "Defined SLAs and SLOs for [services], tracked performance with [tool], and reported [result] to [audience].",
+  "Incident management": "Led incident response and war rooms for [number] [severity] incidents, reducing [impact or time to resolve] to [result].",
+  "Compliance (HIPAA / regulatory)": "Ensured [HIPAA or regulatory] compliance for [system], completing [audits or controls] with [result].",
+  "AI-enabled operations": "Applied [AI tool or method] to [operations task], reducing [time or effort] by [result].",
+  "Observability": "Implemented observability with [tool] across [services], cutting [detection or resolution time] by [result].",
+  "Site reliability (SRE)": "Applied SRE practices to [service], setting [SLOs or error budgets] and improving [reliability result].",
+  "Agile / SAFe / Scrum": "Led [Agile or SAFe] delivery for [number] teams, managing [backlog or planning] to [outcome].",
+  "Salesforce": "Delivered [Salesforce project] for [use case], with [result].",
+  "ServiceNow": "Configured [ServiceNow module] for [process], with [result].",
+  "Azure": "Built or migrated [workload] on Azure using [services], with [result].",
+  "AWS": "Built or migrated [workload] on AWS using [services], with [result].",
+  "Kubernetes / Docker": "Containerized [application] with Docker and deployed it on Kubernetes, with [result].",
+  "Data optimization / big data": "Optimized [data platform or pipeline] handling [data volume], reducing [cost or time] by [result].",
+  "Team leadership": "Led and mentored [number] engineers across [teams], delivering [outcome].",
+  "Financial outcomes": "Delivered [savings or revenue result] of [amount] through [initiative] over [period].",
+  "Non-technical communication": "Explained [technical topic] to [non-technical audience] in plain terms, leading to [decision or outcome].",
+  "Government / public sector": "Delivered [system or service] for [government agency or public program], meeting [requirement].",
+  "Healthcare": "Delivered [system or service] for [healthcare organization or payer], improving [patient or operational result]."
+};
+const FALLBACK_SUGGESTION = "Applied [skill] in my role as [title] at [company] to [result].";
+
+// Inserts confirmed bullets at the top of the most recent experience role in the master text.
+// Returns the new text, or null when no dated role is found.
+function addBulletsToTopRole(text, bullets) {
+  const lines = text.split(/\r?\n/);
+  const isSub = l => l.startsWith("## ") || (!isHeading(l) && !isJobLine(l) && /^[A-Z][A-Z&,\-\/ ]{3,70}$/.test(l));
+  let inExp = false, best = -1, bestKey = null;
+  lines.forEach((raw, i) => {
+    const l = raw.trim();
+    if (!l) return;
+    if (l.startsWith("## ") || isHeading(l)) { inExp = isExperienceTitle(l.replace(/^## /, "")); return; }
+    if (inExp && isJobLine(l)) {
+      const k = jobRecency(l);
+      if (!bestKey || k.end > bestKey.end || (k.end === bestKey.end && k.start > bestKey.start)) { best = i; bestKey = k; }
+    }
+  });
+  if (best === -1) return null;
+  // Place the bullets after the role's descriptive line, if it has one, and before its other content.
+  let pos = best + 1;
+  const after = (lines[pos] || "").trim();
+  if (after && !after.startsWith("- ") && !isJobLine(after) && !isSub(after) && !isHeading(after)) pos++;
+  lines.splice(pos, 0, ...bullets.map(b => "- " + b));
+  return lines.join("\n");
+}
+
+// Reads the checked gaps, adds them to the master resume, and regenerates.
+function addConfirmedGaps() {
+  const status = $("gapStatus");
+  const bullets = [];
+  pendingGaps.forEach((label, i) => {
+    const cb = document.querySelector(`[data-gapchk="${i}"]`);
+    const ta = document.querySelector(`[data-gaptxt="${i}"]`);
+    const text = ta ? ta.value.trim().replace(/^[-•]\s*/, "").replace(/\s+/g, " ") : "";
+    if (cb && cb.checked && text) bullets.push(text);
+  });
+  if (!bullets.length) {
+    if (status) status.textContent = "Check at least one gap and describe what you did first.";
+    return;
+  }
+  if (bullets.some(b => /\[[^\]]*\]/.test(b))) {
+    if (status) status.textContent = "Replace the [bracketed] parts with your real details before adding.";
+    return;
+  }
+  const next = addBulletsToTopRole($("resume").value, bullets);
+  if (!next) {
+    if (status) status.textContent = "No dated experience role was found in your master resume, so nothing was added.";
+    return;
+  }
+  $("resume").value = next;
+  localStorage.setItem(KEY_RESUME, next);
+  generate();
+}
+
+function renderReport(t) {
+  const matched = [
+    ...t.matchedReq.map(x => `<span class="chip hit">${esc(x)}</span>`),
+    ...t.matchedPref.map(x => `<span class="chip hit">${esc(x)} (preferred)</span>`)
+  ].join("") || '<span class="empty">None</span>';
+  // Each gap gets a confirm box. Only gaps the user checks and describes are added, to the top role.
+  pendingGaps = t.gaps.map(g => g.label);
+  const gaps = t.gaps.length
+    ? t.gaps.map((r, i) => `
+        <div class="gap-row">
+          <label class="tog"><input type="checkbox" data-gapchk="${i}"> I have worked on <b>${esc(r.label)}</b>${r.required ? "" : ' <span class="hint">(preferred)</span>'}</label>
+          <div class="row" style="margin:4px 0 6px"><button class="small secondary" data-sugg="${i}">Suggest a sentence</button></div>
+          <textarea data-gaptxt="${i}" rows="2" placeholder="In your words: what you did, where, and the result. Only add what is true."></textarea>
+        </div>`).join("")
+      + `<div class="row" style="margin:8px 0 0"><button id="addGaps" class="small">Add confirmed points to my resume</button></div>
+         <p id="gapStatus" class="hint">Check a gap, describe it, then add it. The resume regenerates with those points in your top role.</p>`
+    : '<span class="empty">None. Every theme in this job description is in your resume.</span>';
+  $("report").innerHTML = `
+    <div class="score">
+      <div class="big">${t.pct}%</div>
+      <div style="flex:1">
+        <div class="bar"><div style="width:${t.pct}%"></div></div>
+        <div class="hint">Required themes count fully and preferred ones half. This measures coverage by your real experience, not keyword stuffing.</div>
+      </div>
+    </div>
+    <h2>Matched</h2><div class="chips">${matched}</div>
+    <h2>Gaps</h2>${gaps}
+    <div class="note">Gaps are added only when you confirm them here. Claim one only if it is true of your experience; otherwise address it in your cover letter or interview.</div>
+    <h2>What changed in this version</h2>
+    <ul class="changes">${t.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>`;
+}
+
+// ---------- Saved versions ----------
+
+function loadVersions() {
+  try { return JSON.parse(localStorage.getItem(KEY_VERS) || "[]"); } catch (e) { return []; }
+}
+
+function renderVersions() {
+  const list = loadVersions();
+  $("versions").innerHTML = list.length
+    ? list.map(v => `
+        <li>
+          <span><b>${esc(v.title || "Untitled role")}</b>${v.company ? " · " + esc(v.company) : ""}<br>
+          <span class="hint">${esc(new Date(v.id).toLocaleString())} · ${v.pct}% alignment</span></span>
+          <span style="display:flex;gap:6px;flex-shrink:0">
+            <button class="small secondary" data-open="${v.id}">Open</button>
+            <button class="small secondary" data-dl="${v.id}">Download</button>
+            <button class="small danger" data-del="${v.id}">Delete</button>
+          </span>
+        </li>`).join("")
+    : '<li class="empty">No versions yet. Each generated resume is saved here.</li>';
+}
+
+// File name starts with the name on the resume: "Your Name - Company - Title - 2026-10-19.doc"
+function fileNameFor(v) {
+  const clean = s => String(s || "").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+  const h1 = ((v.html.match(/<h1>([\s\S]*?)<\/h1>/) || [])[1] || "").replace(/<[^>]+>/g, "");
+  const name = clean(h1) || "Resume";
+  const date = new Date(v.id).toISOString().slice(0, 10);
+  return [name, clean(v.company), clean(v.title), date].filter(Boolean).join(" - ") + ".doc";
+}
+
+function downloadDoc(v) {
+  const css = `body{font-family:Calibri,Arial,sans-serif;font-size:11pt}
+    h1{font-size:20pt;font-weight:bold;margin:0}
+    h3{font-size:14pt;font-weight:bold;text-transform:uppercase;border-bottom:1.5px solid #333;margin:14pt 0 5pt}
+    .lead{font-weight:bold;margin:8pt 0 2pt}
+    .job{margin:6pt 0 2pt} .job b{font-size:12pt}
+    p.sub{font-weight:bold;text-transform:uppercase;margin:4pt 0 0}
+    p{margin:0 0 4pt} ul{margin:0 0 4pt 18pt} li{margin-bottom:2pt}`;
+  const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><style>${css}</style></head><body>${stripVideoHtml(v.html)}</body></html>`;
+  const blob = new Blob(["﻿", doc], {type: "application/msword"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fileNameFor(v);
+  a.click();
+}
+
+// ---------- Actions ----------
+
+async function generateCore() {
+  const resume = $("resume").value.trim();
+  const jd = $("jd").value.trim();
+  if (!resume || !jd) {
+    $("report").innerHTML = '<p class="empty">Add your resume and the job description first.</p>';
+    return;
+  }
+  const title = $("title").value.trim();
+  const company = $("company").value.trim();
+  let source = resume, notes = [], warnings = [];
+  const provider = $("mode").value;
+  if (MODELS[provider]) {
+    const key = localStorage.getItem(keyName(provider));
+    if (!key) {
+      $("report").innerHTML = `<p class="empty">Save your ${PROVIDER_NAMES[provider]} key in the AI drafting section, or switch to rules mode.</p>`;
+      return;
+    }
+    setStage(`Sending your resume and the job description to ${PROVIDER_NAMES[provider]}`);
+    try {
+      const out = await draftWithProvider(provider, resume, jd, title, key, $("model").value);
+      source = out.resume; notes = out.notes; warnings = out.warnings;
+      setStage("Checking figures and formatting the resume");
+    } catch (err) {
+      $("report").innerHTML = `<p class="empty">${PROVIDER_NAMES[provider]} request failed: ${esc(err.message)}. Check the key and model, or switch to rules mode.</p>`;
+      return;
+    }
+  }
+  const t = tailor(source, jd, title, false, resume);
+  const shown = tailor(source, jd, title, true, resume);
+  current = {id: Date.now(), title, company, pct: t.pct, html: t.html};
+  lastRun = {clean: t.html, shown: shown.html};
+  setDownloadReady(true);
+  $("preview").innerHTML = $("hl").checked ? shown.html : t.html;
+  renderReport(t);
+  $("report").insertAdjacentHTML("beforeend", notesHtml(notes, warnings));
+  $("alignMap").innerHTML = renderAlignMap(shown.alignLog);
+  $("changeMap").innerHTML = renderChangeMap(shown.rewriteLog, shown.movedLog);
+
+  const list = loadVersions();
+  list.unshift(current);
+  localStorage.setItem(KEY_VERS, JSON.stringify(list.slice(0, 50)));
+  renderVersions();
+  return true;
+}
+
+// ---------- Working and ready states ----------
+
+let busyTimer = null, busyStart = 0;
+
+// The Word download is enabled only when a processed resume is on the page.
+function setDownloadReady(on) {
+  const b = $("dl");
+  if (!b) return;
+  b.disabled = !on;
+  b.title = on ? "" : "Available after your resume is generated";
+}
+
+function startBusy(label) {
+  busyStart = Date.now();
+  setDownloadReady(false);
+  $("run").disabled = true;
+  $("run").textContent = "Working...";
+  $("preview").classList.add("dimmed");
+  document.title = "Working... | Resume Tailor";
+  $("report").innerHTML = `
+    <div class="busy-card" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <div style="flex:1">
+        <div class="busy-title">${esc(label)}</div>
+        <div class="hint"><span id="stage">Starting</span> &middot; <span id="elapsed">0s elapsed</span></div>
+        <div class="indet"><div></div></div>
+      </div>
+    </div>`;
+  clearInterval(busyTimer);
+  busyTimer = setInterval(() => {
+    const el = $("elapsed");
+    if (el) el.textContent = Math.round((Date.now() - busyStart) / 1000) + "s elapsed";
+  }, 500);
+}
+
+function setStage(text) {
+  const el = $("stage");
+  if (el) el.textContent = text;
+}
+
+function stopBusy() {
+  clearInterval(busyTimer);
+  $("run").disabled = false;
+  $("run").textContent = "Generate tailored resume";
+  $("preview").classList.remove("dimmed");
+  document.title = "Resume Tailor";
+}
+
+function showReady() {
+  $("report").insertAdjacentHTML("afterbegin", `
+    <div class="ready" role="status">
+      <span class="check">&#10003;</span>
+      <div><b>Your tailored resume is ready</b>
+      <div class="hint">The preview is updated below. Review it, then download.</div></div>
+    </div>`);
+  const p = $("preview");
+  p.classList.remove("flash");
+  void p.offsetWidth; // restart the glow animation
+  p.classList.add("flash");
+  p.scrollIntoView({behavior: "smooth", block: "start"});
+  document.title = "Ready | Resume Tailor";
+}
+
+async function generate() {
+  const provider = $("mode").value;
+  startBusy(MODELS[provider] ? `Drafting with ${PROVIDER_NAMES[provider]}` : "Tailoring your resume");
+  await new Promise(r => setTimeout(r, 350)); // lets the working state paint before the work starts
+  let ok = false;
+  try {
+    ok = await generateCore();
+  } catch (err) {
+    $("report").innerHTML = `<p class="empty">Something went wrong: ${esc(err.message)}</p>`;
+  }
+  stopBusy();
+  if (ok) showReady();
+}
+
+$("versions").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const list = loadVersions();
+  if (b.dataset.del) {
+    localStorage.setItem(KEY_VERS, JSON.stringify(list.filter(x => String(x.id) !== b.dataset.del)));
+    renderVersions();
+    return;
+  }
+  const id = b.dataset.open || b.dataset.dl;
+  const v = list.find(x => String(x.id) === id);
+  if (!v) return;
+  if (b.dataset.open) {
+    current = v;
+    $("preview").innerHTML = stripVideoHtml(v.html);
+    lastRun = null;
+    setDownloadReady(true);
+    $("alignMap").innerHTML = '<p class="empty">Generate a new resume to see where it matches the job.</p>';
+    $("changeMap").innerHTML = '<p class="empty">Generate a new resume to see what was added or moved.</p>';
+    $("report").innerHTML = `<p class="empty">Showing saved version: ${esc(v.title || "Untitled role")} (${v.pct}% alignment). Generate a new one to see its full report.</p>`;
+  } else {
+    downloadDoc(v);
+  }
+});
+
+$("run").onclick = generate;
+$("report").addEventListener("click", e => {
+  const t = e.target;
+  if (!t) return;
+  if (t.id === "addGaps") { addConfirmedGaps(); return; }
+  if (t.dataset && t.dataset.sugg !== undefined) {
+    const i = t.dataset.sugg;
+    const ta = document.querySelector(`[data-gaptxt="${i}"]`);
+    const status = $("gapStatus");
+    if (ta) ta.value = GAP_SUGGESTIONS[pendingGaps[i]] || FALLBACK_SUGGESTION;
+    if (status) status.textContent = "Replace each [bracketed] part with your real details, check the box, then add it.";
+  }
+});
+$("hl").onchange = () => {
+  if (lastRun) $("preview").innerHTML = $("hl").checked ? lastRun.shown : lastRun.clean;
+};
+$("clear").onclick = () => { ["jd", "title", "company", "link"].forEach(id => $(id).value = ""); };
+$("dl").onclick = () => { if (!current) return; downloadDoc(current); };
+$("copy").onclick = () => {
+  navigator.clipboard.writeText($("preview").innerText).then(() => { $("copy").textContent = "Copied"; });
+};
+
+// ---------- Starting data ----------
+
+// Starting template only. It contains no personal details; each person pastes or uploads their own master resume.
+const DEFAULT_RESUME = `Your Name | your.email@example.com | 555-555-5555
+
+PROFESSIONAL SUMMARY
+Replace this with a short summary of your experience.
+
+CORE CAPABILITIES
+Core capabilities: list the skills and tools you use most.
+
+EXPERIENCE
+Company, City | Start Year to Present | Your Title
+- Replace this with a bullet describing something you did in this role.
+- Add one bullet per achievement, with real numbers where you have them.
+`;
+
+// ---------- Master resume upload ----------
+
+const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+
+function setStatus(msg) { $("uploadStatus").textContent = msg; }
+
+function readMeta(key) {
+  try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; }
+}
+
+function renderMaster() {
+  const meta = readMeta(KEY_META);
+  $("masterMeta").textContent = meta
+    ? `Current master: ${meta.name}, uploaded ${new Date(meta.date).toLocaleString()}.`
+    : "Current master: built-in default. Upload your latest resume to replace it.";
+  $("restore").style.display = localStorage.getItem(KEY_PREV) === null ? "none" : "";
+}
+
+function readBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error("the file could not be read"));
+    r.readAsArrayBuffer(file);
+  });
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("a reader library did not load; check your connection or save the file as .docx or .txt"));
+    document.head.appendChild(s);
+  });
+}
+
+// Word headings become uppercase lines, bullets get "- ", and the name line is left alone.
+async function textFromDocx(buf) {
+  if (typeof JSZip === "undefined") throw new Error("the Word reader did not load; check your connection or save the file as .txt");
+  const zip = await JSZip.loadAsync(buf);
+  const entry = zip.file("word/document.xml");
+  if (!entry) throw new Error("this does not look like a valid .docx file");
+  const xml = new DOMParser().parseFromString(await entry.async("string"), "application/xml");
+  const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+  const out = [];
+  let first = true;
+  for (const p of Array.from(xml.getElementsByTagNameNS(W, "p"))) {
+    const text = Array.from(p.getElementsByTagNameNS(W, "t")).map(t => t.textContent).join("").replace(/\s+/g, " ").trim();
+    if (!text) { out.push(""); continue; }
+    const ps = p.getElementsByTagNameNS(W, "pStyle")[0];
+    const style = ps ? (ps.getAttributeNS(W, "val") || "") : "";
+    const isList = p.getElementsByTagNameNS(W, "numPr").length > 0;
+    const runs = Array.from(p.getElementsByTagNameNS(W, "r")).filter(r => r.getElementsByTagNameNS(W, "t").length);
+    const allBold = runs.length > 0 && runs.every(r => {
+      const b = r.getElementsByTagNameNS(W, "b")[0];
+      return b && !["0", "false"].includes(b.getAttributeNS(W, "val"));
+    });
+    const headingLike = !isList && !text.includes(" | ") && text.length <= 70 && !/@|\d{3}/.test(text)
+      && !/^(email|phone|linkedin|location|address)\s*:/i.test(text);
+    if (!first && (/heading/i.test(style) || (allBold && headingLike))) out.push(text.toUpperCase());
+    else if (isList) out.push("- " + text);
+    else out.push(text);
+    first = false;
+  }
+  return out.join("\n");
+}
+
+async function textFromPdf(buf) {
+  if (typeof pdfjsLib === "undefined") await loadScript(PDFJS + "pdf.min.js");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js";
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  const lines = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const content = await (await pdf.getPage(i)).getTextContent();
+    let row = [], lastY = null;
+    for (const it of content.items) {
+      const y = Math.round(it.transform[5]);
+      if (lastY !== null && Math.abs(y - lastY) > 2) { lines.push(row.join("").trim()); row = []; }
+      row.push(it.str);
+      lastY = y;
+    }
+    lines.push(row.join("").trim());
+  }
+  return lines.filter(Boolean).map(l => l.replace(/^[•●▪◦]\s*/, "- ")).join("\n");
+}
+
+function normalizeResume(t) {
+  const lines = t.split(/\r?\n/).map(l => l.replace(/\s+/g, " ").trim());
+  const {lines: kept} = dropExcludedLines(lines);
+  const out = [];
+  for (const l of kept) {
+    if (!l && (out.length === 0 || out[out.length - 1] === "")) continue;
+    out.push(l);
+  }
+  while (out.length && out[out.length - 1] === "") out.pop();
+  // Name and contact on separate lines become "Name | contact" so the header parses.
+  if (out.length > 1 && !out[0].includes(" | ") && /@|\d{3}[.\-\s]\d{3}/.test(out[1]) && !out[1].startsWith("- ")) {
+    out.splice(0, 2, out[0] + " | " + out[1]);
+  }
+  return out.join("\n");
+}
+
+async function handleUpload(file) {
+  setStatus(`Reading ${file.name}...`);
+  try {
+    const buf = await readBuffer(file);
+    const name = file.name.toLowerCase();
+    let text;
+    if (name.endsWith(".docx")) text = await textFromDocx(buf);
+    else if (name.endsWith(".pdf")) text = await textFromPdf(new Uint8Array(buf));
+    else if (name.endsWith(".txt") || name.endsWith(".md")) text = new TextDecoder().decode(buf);
+    else throw new Error("use a .docx, .pdf, .txt, or .md file");
+    text = normalizeResume(text);
+    if (text.length < 200) throw new Error("very little text was found; if this is a scanned PDF, upload a .docx or .txt copy instead");
+
+    // Keep the current master so the user can swap back.
+    const prev = $("resume").value;
+    if (prev.trim()) {
+      localStorage.setItem(KEY_PREV, prev);
+      const pm = localStorage.getItem(KEY_META);
+      pm === null ? localStorage.removeItem(KEY_PREV_META) : localStorage.setItem(KEY_PREV_META, pm);
+    }
+    $("resume").value = text;
+    localStorage.setItem(KEY_RESUME, text);
+    localStorage.setItem(KEY_META, JSON.stringify({name: file.name, date: new Date().toISOString()}));
+    setStatus(`Master resume updated from ${file.name}. Saved versions are unchanged.`);
+    renderMaster();
+  } catch (err) {
+    setStatus(`Could not use that file: ${err.message}.`);
+  }
+}
+
+$("pick").onclick = () => $("upload").click();
+$("upload").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (f) handleUpload(f);
+  e.target.value = "";
+});
+$("restore").onclick = () => {
+  const prev = localStorage.getItem(KEY_PREV);
+  if (prev === null) return;
+  const currentText = $("resume").value;
+  const currentMeta = localStorage.getItem(KEY_META);
+  const prevMeta = localStorage.getItem(KEY_PREV_META);
+  $("resume").value = prev;
+  localStorage.setItem(KEY_RESUME, prev);
+  prevMeta === null ? localStorage.removeItem(KEY_META) : localStorage.setItem(KEY_META, prevMeta);
+  localStorage.setItem(KEY_PREV, currentText);
+  currentMeta === null ? localStorage.removeItem(KEY_PREV_META) : localStorage.setItem(KEY_PREV_META, currentMeta);
+  setStatus("Swapped with the previous master resume.");
+  renderMaster();
+};
+
+// ---------- Claude API drafting ----------
+
+const SYSTEM_PROMPT = `You tailor resumes. You receive a MASTER RESUME and a JOB DESCRIPTION.
+
+Rules:
+- Use only facts, employers, dates, titles, metrics, certifications, projects, ventures, and tools that appear in the master resume. Never invent, inflate, or extend a metric. Do not name a technology the master does not name.
+- Keep every employer, role, certification, and project or venture from the master. Do not drop any of them to save space.
+- Write a detailed resume. Open with a summary of two short paragraphs. For each current or recent role, give one context sentence, then 5 to 8 bullets of one or two sentences each. Use the job's language where it truthfully matches the candidate's experience, and put the most relevant bullets first.
+- Group related work under sub-headings when the master has a clear theme. Write each sub-heading on its own line in ALL CAPS.
+- Group the technology stack by category, one bullet per category.
+- Do not add a skill, certification, client, or metric the master does not list.
+- Do not include any video section or video or YouTube links.
+- Output plain text in this exact layout: the candidate's name on the first line; a contact line "Email | Phone"; section titles in ALL CAPS on their own lines; job lines as "Company, Location | Dates | Title"; bullets starting with "- ".
+- After the resume, output a line "=== NOTES ===" followed by up to 8 short bullets: what you emphasized, and any job requirement the master does not support (state these plainly; do not claim them).
+- Output only the resume and the notes. No preamble.`;
+
+async function draftWithClaude(resume, jd, title, key, model) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 8000,
+      system: SYSTEM_PROMPT,
+      messages: [{role: "user", content: `TARGET ROLE: ${title || "(not stated)"}\n\nJOB DESCRIPTION:\n${jd}\n\nMASTER RESUME:\n${resume}`}]
+    })
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { const j = await res.json(); detail = j.error && j.error.message ? ": " + j.error.message : ""; } catch (e) {}
+    throw new Error(`HTTP ${res.status}${detail}`);
+  }
+  const data = await res.json();
+  const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+  if (!text) throw new Error("the response was empty");
+  return finishDraft(text, resume);
+}
+
+// Splits the model's reply into resume and notes, normalizes it, and flags unsupported figures.
+function finishDraft(text, resume) {
+  const [resumePart, notesPart = ""] = text.split(/=+\s*NOTES\s*=+/i);
+  const resumeOut = normalizeResume(resumePart.trim());
+  // Safety check: flag any figure in the draft that does not appear in the master resume.
+  const masterNums = new Set(resume.match(/\d[\d.,%+]*/g) || []);
+  const newNums = [...new Set((resumeOut.match(/\d[\d.,%+]*/g) || []).filter(n => !masterNums.has(n)))];
+  const notes = notesPart.split("\n").map(l => l.replace(/^[-•*]\s*/, "").trim()).filter(Boolean);
+  const warnings = newNums.length
+    ? [`Check these figures; they do not appear in your master resume: ${newNums.join(", ")}`] : [];
+  return {resume: resumeOut, notes, warnings};
+}
+
+function userMessage(resume, jd, title) {
+  return `TARGET ROLE: ${title || "(not stated)"}\n\nJOB DESCRIPTION:\n${jd}\n\nMASTER RESUME:\n${resume}`;
+}
+
+async function draftWithGemini(resume, jd, title, key, model) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {"content-type": "application/json", "x-goog-api-key": key},
+    body: JSON.stringify({
+      systemInstruction: {parts: [{text: SYSTEM_PROMPT}]},
+      contents: [{role: "user", parts: [{text: userMessage(resume, jd, title)}]}],
+      generationConfig: {maxOutputTokens: 8000}
+    })
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { const j = await res.json(); detail = j.error && j.error.message ? ": " + j.error.message : ""; } catch (e) {}
+    throw new Error(`HTTP ${res.status}${detail}`);
+  }
+  const data = await res.json();
+  const cand = (data.candidates || [])[0];
+  const text = cand && cand.content ? (cand.content.parts || []).map(p => p.text || "").join("\n").trim() : "";
+  if (!text) throw new Error("the response was empty (it may have been blocked by a safety filter)");
+  return finishDraft(text, resume);
+}
+
+function draftWithProvider(provider, resume, jd, title, key, model) {
+  if (provider === "gemini") return draftWithGemini(resume, jd, title, key, model || "gemini-3.8-flash");
+  return draftWithClaude(resume, jd, title, key, model || "claude-sonnet-5-5");
+}
+
+function notesHtml(notes, warnings) {
+  if (!notes.length && !warnings.length) return "";
+  return `<h2>Notes on this draft</h2>
+    ${warnings.map(w => `<div class="note" style="border-left-color:#b26a00;background:#fdf6e7">${esc(w)}</div>`).join("")}
+    <ul class="changes">${notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>`;
+}
+
+function keyName(provider) { return provider === "gemini" ? KEY_GEMINI : KEY_API; }
+
+function populateModels() {
+  const p = $("mode").value;
+  if (!MODELS[p]) return;
+  $("model").innerHTML = MODELS[p].map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join("");
+  $("keyLabel").textContent = p === "gemini" ? "Google Gemini API key" : "Anthropic API key";
+}
+
+function renderKeyStatus() {
+  populateModels();
+  const p = $("mode").value;
+  $("keyStatus").textContent = MODELS[p]
+    ? (localStorage.getItem(keyName(p)) ? `A ${PROVIDER_NAMES[p]} key is saved in this browser.`
+      : `No ${PROVIDER_NAMES[p]} key saved yet. Add one below.`)
+    : "Rules mode works without a key.";
+}
+
+$("saveKey").onclick = () => {
+  const k = $("apikey").value.trim();
+  if (!k) return;
+  if (!MODELS[$("mode").value]) $("mode").value = "claude";
+  localStorage.setItem(keyName($("mode").value), k);
+  $("apikey").value = "";
+  renderKeyStatus();
+};
+$("clearKey").onclick = () => {
+  if (MODELS[$("mode").value]) localStorage.removeItem(keyName($("mode").value));
+  renderKeyStatus();
+};
+$("mode").onchange = renderKeyStatus;
+
+// ---------- Your details ----------
+
+function normalizeUrl(u) {
+  const v = String(u || "").trim();
+  if (!v) return "";
+  return /^https?:\/\//i.test(v) ? v : "https://" + v.replace(/^\/+/, "");
+}
+
+function renderProfile() {
+  const p = loadProfile();
+  $("pName").value = p.name || "";
+  $("pLinkedin").value = p.linkedin || "";
+}
+
+$("saveProfile").onclick = () => {
+  const profile = {name: $("pName").value.trim(), linkedin: normalizeUrl($("pLinkedin").value)};
+  let saved = true;
+  try { localStorage.setItem(KEY_PROFILE, JSON.stringify(profile)); } catch (e) { saved = false; }
+  $("pLinkedin").value = profile.linkedin;
+  $("profileStatus").textContent = saved
+    ? "Saved in this browser. Your name and LinkedIn link will appear on new resumes."
+    : "Could not save in this browser. Your details will be used for this session only.";
+};
+
+// ---------- Startup ----------
+
+const savedResume = localStorage.getItem(KEY_RESUME);
+const resumeEl = $("resume");
+resumeEl.value = savedResume === null ? DEFAULT_RESUME : savedResume;
+resumeEl.addEventListener("input", () => localStorage.setItem(KEY_RESUME, resumeEl.value));
+renderMaster();
+renderVersions();
+renderProfile();
+// Google Gemini is the default provider on every load.
+$("mode").value = "gemini";
+renderKeyStatus();
+</script>
+</body>
+</html>
